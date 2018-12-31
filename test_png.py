@@ -8,6 +8,11 @@ import png
 output_buffer = ''
 output_buffers = []
 
+hex_buffers=[]
+out_hexs = []
+out_hex_string =''
+
+
 HEX2BINMAP={
     '0000':'0',
     '0001':'1',
@@ -27,8 +32,17 @@ HEX2BINMAP={
     '1111':'F'
 }
 
+HEX2BINMAP_list=['0000', '0001', '0010', '0011',
+                 '0100', '0101', '0110', '0111',
+                 '1000', '1001', '1010', '1011',
+                 '1100', '1101', '1110', '1111']
+
+input_file = sys.argv[1]
+input_filename = os.path.basename(input_file)
+output_var_name = input_filename.replace('.','_').replace('-','_').upper()[4:]
+
 # r=png.Reader(file=urllib.urlopen('http://www.schaik.com/pngsuite/basn0g02.png'))
-r=png.Reader(filename='./notice.png')
+r=png.Reader(filename=sys.argv[1])
 test_list = r.read()
 
 png_raw_list = list(test_list[2])
@@ -53,21 +67,54 @@ def makeBCD(bin_string):
         output_hex=output_hex+binStringToHex(active_4_bit)
     return output_hex
 
-for png_raw_bytes in png_raw_list:
-    output_buffer=''
-    for png_raw_byte in png_raw_bytes:
-        if png_raw_byte > 128:
-            output_buffer = output_buffer+'1'
-        else:
-            output_buffer = output_buffer+'0'
 
-    output_buffers.append(output_buffer)
+def getHex2BinMap(int):
+    return HEX2BINMAP_list[int]
 
-# print('\n'.join(output_buffers))
+def printHexPattern(teststring):
+    print('\nprinthexpattern\n')
+    a=teststring.replace(' ','').split(',')
+    a_double = [[a[i], a[i+1]] for i in range(0,len(a),2)]
+    for a in a_double:
+        for b in a:
+            c = b[2:]
+            for d in c:
+                cache=getHex2BinMap(int(d,16))
+                cache=cache.replace('0',' ').replace('1','X')
+                print(cache,end='')
+        print()
 
-hex_buffers=[]
-for output_buffer in output_buffers:
-    hex_buffers.append(makeBCD(output_buffer))
+def main():
+    for png_raw_bytes in png_raw_list:
+        output_buffer=''
+        for png_raw_byte in png_raw_bytes:
+            if png_raw_byte > 128:
+                output_buffer = output_buffer+'1'
+            else:
+                output_buffer = output_buffer+'0'
 
-for hex_buffer in hex_buffers:
-    print('0x%s,0x%s' % (hex_buffer[0:4],hex_buffer[4:]))
+        output_buffers.append(output_buffer)
+
+    print('parsed 0 1 pattern')
+    for output_buffer in output_buffers:
+        print(output_buffer)
+        hex_buffers.append(makeBCD(output_buffer))
+
+    print()
+
+    for hex_buffer in hex_buffers:
+        out_hexs.append('0x%s,0x%s' % (hex_buffer[0:4],hex_buffer[4:]))
+
+    output_string = ','.join(out_hexs)
+
+    # generated pattern
+    print('\n generated pattern\n')
+    printHexPattern(output_string)
+
+    #
+    print('\nhexed code:')
+    print('%s="%s"' % (output_var_name, output_string))
+
+
+if __name__ =='__main__':
+    main()
